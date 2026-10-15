@@ -2,6 +2,35 @@
 
 Base visual para crear pantallas y modales nuevos con el mismo estilo. Los valores salen de `src/constants/theme.ts`; los ejemplos reales están en `src/components/` y `src/app/index.tsx`.
 
+## Guía funcional de gastos
+
+Usa esta sección al implementar el registro y la gestión de gastos. Mantén la arquitectura existente: tipos en `src/types/expense.ts`, acceso a datos en `src/database/expenseRepository.ts`, estado compartido en `src/context/ExpenseContext.tsx` y UI en `src/components/` y `src/app/index.tsx`.
+
+### Datos del gasto
+
+- Cada gasto debe guardar un monto, una categoría y una fecha obligatorios.
+- La fecha representa el día del gasto, no necesariamente el día en que se registra. Muéstrala en el formulario con un selector de fecha; al crear un gasto, selecciona hoy inicialmente. Al editar, conserva la fecha existente hasta que el usuario la cambie.
+- La factura o comprobante es opcional. Permite elegir una imagen de la galería o tomar una foto con la cámara. Solicita permisos cuando corresponda y comunica claramente si el permiso se deniega o la selección falla.
+- La descripción es opcional.
+- Si se añade una propiedad de comprobante al modelo, persístela y recupérala junto con el gasto; no guardes los bytes de la imagen directamente en SQLite. Conserva una referencia local y contempla que el archivo pueda dejar de estar disponible.
+- Mantén el mapeo entre `Expense`, SQLite y la UI sincronizado. Si se modifica el esquema, inicializa y migra la base de datos sin perder los gastos existentes.
+
+### Formulario y validación
+
+- **Monto (obligatorio):** admite solo dígitos y un separador decimal, con hasta dos cifras decimales. Rechaza letras, signos y formatos malformados; valida el valor final antes de guardarlo y no conviertas entradas inválidas en cero. El teclado decimal ayuda, pero no sustituye la validación.
+- **Categoría (obligatoria):** si el usuario intenta guardar sin elegir una, muestra un mensaje explícito junto al selector o mediante el mecanismo de alerta de la aplicación. No ocultes este caso deshabilitando el botón de guardar antes de que pueda mostrar el mensaje.
+- **Fecha (obligatoria):** valida que haya una fecha seleccionada antes de guardar.
+- **Descripción (opcional):** limita la entrada a 400 caracteres y permite únicamente letras del alfabeto español (incluidas tildes, diéresis y ñ), dígitos y espacios. Filtra o rechaza los demás caracteres tanto en la interacción como en la validación al guardar.
+- Mantén los datos ingresados cuando un guardado falle y muestra el error; limpia el formulario solo tras guardar correctamente o cancelar/cerrar según el patrón del modal.
+
+### Operaciones y lista
+
+- Permite abrir un gasto para editarlo, precargando todos sus campos, incluidos fecha y comprobante. Persiste la edición y actualiza el estado visible solo cuando SQLite confirma el cambio.
+- Permite eliminar un gasto con confirmación antes de borrar. Si falla el borrado, informa al usuario y conserva el elemento.
+- Añade una opción visible para ordenar los gastos por monto descendente (los más altos primero). Al activar el ordenamiento, los valores mayores deben preceder a los menores; resuelve empates por fecha descendente. Al desactivarlo, restaura el orden habitual de gastos recientes primero.
+- Aplica el orden al conjunto de gastos que se muestra sin alterar los montos, totales ni registros guardados. Mantén el filtrado mensual existente si la pantalla muestra solo los gastos del mes actual.
+- Actualiza las operaciones del repositorio y el contexto para que la lista, los totales y las acciones de edición/eliminación reflejen los datos persistidos.
+
 ## Colores y espaciado
 
 ```typescript
@@ -55,3 +84,9 @@ Todo modal o pantalla con inputs usa `KeyboardAvoidingView` (`'padding'` en iOS,
 - [ ] Gradientes translúcidos sobre cards, paneles con poca opacidad
 - [ ] Colores y espaciado desde `theme.ts`, sin valores sueltos
 - [ ] Inputs: `ScrollView` + `KeyboardAvoidingView`
+- [ ] Fecha y categoría obligatorias con validación visible
+- [ ] Monto numérico válido con hasta dos decimales
+- [ ] Descripción opcional, limitada a 400 caracteres permitidos
+- [ ] Comprobante opcional desde galería o cámara, con permisos y errores explícitos
+- [ ] Edición y eliminación confirmada con persistencia en SQLite
+- [ ] Orden descendente por monto con desempate por fecha

@@ -15,7 +15,15 @@ await db.execAsync(`
     amount      REAL NOT NULL,              -- REAL = numero con decimales
     category    TEXT NOT NULL,              
     date        TEXT NOT NULL,              -- fecha en formato ISO 8601
-    description TEXT                        -- puede ser NULL porque es opcional
+    description TEXT,                       -- puede ser NULL porque es opcional
+    receipt_uri TEXT                        -- referencia local opcional al comprobante
     );
     `);
+
+    const columns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(expenses)'
+    );
+    if (!columns.some((column) => column.name === 'receipt_uri')) {
+        await db.execAsync('ALTER TABLE expenses ADD COLUMN receipt_uri TEXT');
+    }
 }
