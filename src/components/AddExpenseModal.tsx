@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
+  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -34,22 +35,33 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
   const [category, setCategory] = useState<Category | null>(null);
   const [description, setDescription] = useState('');
 
-  const handleSubmit = () => {
+  
+  // async porque ahora hay que esperar a que el gasto se guarde en el telefono
+  const handleSubmit = async () => {
     if (!amount || !category) return;
-
-    addExpense({
-      amount: parseFloat(amount),
-      category,
-      date: new Date(),
-      description: description.trim() || undefined,
-    });
-
+ 
+    try {
+      await addExpense({
+        amount: parseFloat(amount),
+        category,
+        date: new Date(),
+        description: description.trim() || undefined,
+      });
+    } catch (error) {
+      // Si no se pudo guardar, se avisa y el modal queda abierto con los datos
+      console.error('Error al guardar el gasto', error);
+      Alert.alert('Error', 'No se pudo guardar el gasto. Intenta de nuevo.');
+      return;
+    }
+ 
     // Reset form
     setAmount('');
     setCategory(null);
     setDescription('');
     onClose();
   };
+
+
 
   // Igual que al guardar, se limpia el formulario para que no quede texto viejo
   const handleClose = () => {
